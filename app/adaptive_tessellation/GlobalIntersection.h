@@ -207,6 +207,11 @@ inline void displace_self_intersection_free(AdaptiveTessellation& mesh)
         return;
     }
     spdlog::info("No self intersections on start positions.");
+    if (ipc::has_intersections(collisionMesh, vertices_target)) {
+        spdlog::warn("Mesh has self-intersections on target positions");
+    } else {
+        spdlog::info("No self-intersections on target positions");
+    }
 
     if constexpr (false) {
         spdlog::info("Iterative per vertex CCD");
