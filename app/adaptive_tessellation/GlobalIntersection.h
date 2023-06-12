@@ -5,6 +5,7 @@
 #include <igl/remove_unreferenced.h>
 #include <spdlog/stopwatch.h>
 #include <ipc/ipc.hpp>
+#include <paraviewo/HDF5VTUWriter.hpp>
 
 namespace adaptive_tessellation {
 /**
@@ -88,6 +89,39 @@ inline void move_subset_recursive(
         0.0,
         ipc::DEFAULT_CCD_TOLERANCE,
         100);
+
+    ipc::Candidates candidates;
+    candidates.build(
+        collisionMesh,
+        vertices_current,
+        vertices_target_subset,
+        /*inflation_radius=*/0.0 / 2,
+        ipc::DEFAULT_BROAD_PHASE_METHOD);
+
+    // Narrow phase
+    for (size_t i = 0; i < candidates.size(); i++) {
+        double toi;
+        bool is_collision = candidates[i].ccd(
+            vertices_current,
+            vertices_target_subset,
+            collisionMesh.edges(),
+            collisionMesh.faces(),
+            toi,
+            0.0,
+            /*tmax=*/1.0,
+            ipc::DEFAULT_CCD_TOLERANCE,
+            100);
+
+        if (is_collision) {
+            // Do something
+            candidates[i].print_ccd_query(
+                vertices_current,
+                vertices_target_subset,
+                collisionMesh.edges(),
+                collisionMesh.faces());
+            std::cout << std::endl;
+        }
+    }
 
     // reposition
     double t_interp = 0.99 * t;
@@ -206,6 +240,31 @@ inline void displace_self_intersection_free(AdaptiveTessellation& mesh)
                      "handled yet.");
         return;
     }
+
+    {
+        paraviewo::HDF5VTUWriter writer;
+        Eigen::MatrixXd v = vertices_current;
+        for (size_t n = 0; n < 1000; ++n) {
+            for (size_t i = 0; i < vertices_current.rows(); ++i) {
+                const Eigen::Vector3d& p0 = vertices_current.row(i);
+                const Eigen::Vector3d& p1 = vertices_target.row(i);
+                const double t = n / 1000.0;
+                const Eigen::Vector3d p = (1 - t) * p0 + t * p1;
+                v.row(i) = p;
+            }
+            if (ipc::has_intersections(collisionMesh, v)) {
+                spdlog::warn("Self-intersections at iteration {}", n);
+            }
+            std::string name = "interp_";
+            if (n < 1000) name += "0";
+            if (n < 100) name += "0";
+            if (n < 10) name += "0";
+            name += std::to_string(n);
+            name += ".hdf";
+            writer.write_mesh(name, v, faces);
+        }
+    }
+
     spdlog::info("No self intersections on start positions.");
     if (ipc::has_intersections(collisionMesh, vertices_target)) {
         spdlog::warn("Mesh has self-intersections on target positions");
