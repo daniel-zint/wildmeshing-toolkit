@@ -1,24 +1,24 @@
-#include "TriMeshVertexSmoothOperation.hpp"
+#include "VertexSmooth.hpp"
 
 #include <wmtk/SimplicialComplex.hpp>
 
-namespace wmtk {
-TriMeshVertexSmoothOperation::TriMeshVertexSmoothOperation(
-    Mesh& m,
+namespace wmtk::operations::tri_mesh {
+VertexSmooth::VertexSmooth(
+    wmtk::Mesh& m,
     const Tuple& t,
-    const OperationSettings<TriMeshVertexSmoothOperation>& settings)
+    const OperationSettings<VertexSmooth>& settings)
     : Operation(m)
     , m_tuple(t)
     , m_pos_accessor(m.create_accessor<double>(settings.position))
     , m_settings{settings}
 {}
 
-std::string TriMeshVertexSmoothOperation::name() const
+std::string VertexSmooth::name() const
 {
-    return "vertex_smooth";
+    return "tri_mesh_vertex_smooth";
 }
 
-bool TriMeshVertexSmoothOperation::before() const
+bool VertexSmooth::before() const
 {
     if (m_mesh.is_outdated(m_tuple) || !m_mesh.is_valid(m_tuple)) {
         return false;
@@ -29,9 +29,10 @@ bool TriMeshVertexSmoothOperation::before() const
     return true;
 }
 
-bool TriMeshVertexSmoothOperation::execute()
+bool VertexSmooth::execute()
 {
-    const std::vector<Simplex> one_ring = SimplicialComplex::vertex_one_ring(m_mesh, m_tuple);
+    const std::vector<Simplex> one_ring =
+        SimplicialComplex::vertex_one_ring(dynamic_cast<TriMesh&>(m_mesh), m_tuple);
     auto p_mid = m_pos_accessor.vector_attribute(m_tuple);
     p_mid = Eigen::Vector3d::Zero();
     for (const Simplex& s : one_ring) {
@@ -46,11 +47,11 @@ bool TriMeshVertexSmoothOperation::execute()
     for (const Simplex& s : star_faces) {
         incident_face_tuple.emplace_back(s.tuple());
     }
-    increment_cell_hash(incident_face_tuple);
+    update_cell_hash(incident_face_tuple);
 
 
     return true;
 }
 
 
-} // namespace wmtk
+} // namespace wmtk::operations::tri_mesh
