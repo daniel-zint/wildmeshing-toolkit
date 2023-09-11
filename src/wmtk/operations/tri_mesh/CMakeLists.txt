@@ -1,4 +1,6 @@
 set(SRC_FILES
+    TriMeshOperation.hpp
+    TriMeshOperation.cpp
     EdgeSplit.hpp
     EdgeSplit.cpp
     EdgeSplitAtMidpoint.hpp

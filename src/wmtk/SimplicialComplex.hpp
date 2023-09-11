@@ -112,7 +112,11 @@ public:
      * @brief check if the intersection of simplices with their boundary is an empty set
      */
     static bool simplices_w_boundary_intersect(const Mesh& m, const Simplex& s1, const Simplex& s2);
-
+    
+    /**
+     * @brief get all the the top_simplex of m which is a coface of Simplex s, this function can be used in computing closed_star and open_star
+     */
+    static SimplicialComplex top_coface_simplex(const Mesh& m, const Simplex& s);
     /**
      * @brief The union of all simplices with boundary that have s in their boundary.
      *
@@ -151,12 +155,17 @@ public:
     //////////////////////////////////
 
     /**
-     * @brief get one ring neighbors of vertex in _t_
+     * @brief get one ring vertex neighbors of vertex in _t_
      *
      * The vertex one ring does not include the vertex of the tuple itself.
      */
     static std::vector<Simplex> vertex_one_ring(const Mesh& m, Tuple t);
 
+    /**
+     * @brief get one ring vertex neighbors of vertex in _t_
+     *
+     * The vertex one ring does not include the vertex of the tuple itself.
+     */
     static std::vector<Simplex> vertex_one_ring(const TriMesh& m, Tuple t);
 
     static std::vector<Simplex> k_ring(const Mesh& m, Tuple t, int k);
