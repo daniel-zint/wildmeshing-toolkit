@@ -28,11 +28,12 @@ Mesh::~Mesh() = default;
 std::vector<Tuple> Mesh::get_all(PrimitiveType type) const
 {
     ConstAccessor<char> flag_accessor = get_flag_accessor(type);
+    const attribute::CachingAccessor<char>& flag_accessor_indices = flag_accessor.index_access();
     std::vector<Tuple> ret;
     long cap = capacity(type);
     ret.reserve(cap);
     for (size_t index = 0; index < cap; ++index) {
-        if ((flag_accessor.scalar_attribute(index) & 1)) {
+        if ((flag_accessor_indices.const_scalar_attribute(index) & 1)) {
             ret.emplace_back(tuple_from_id(type, index));
         }
     }
@@ -81,9 +82,10 @@ std::vector<long> Mesh::request_simplex_indices(PrimitiveType type, long count)
 
     m_attribute_manager.m_capacities[simplex_dim] = new_capacity;
 
+    attribute::CachingAccessor<char>& flag_accessor_indices = flag_accessor.index_access();
 
     for (const long simplex_index : ret) {
-        flag_accessor.scalar_attribute(simplex_index) |= 0x1;
+        flag_accessor_indices.scalar_attribute(simplex_index) |= 0x1;
     }
 
     return ret;
@@ -92,6 +94,18 @@ std::vector<long> Mesh::request_simplex_indices(PrimitiveType type, long count)
 long Mesh::capacity(PrimitiveType type) const
 {
     return m_attribute_manager.m_capacities.at(get_simplex_dimension(type));
+}
+
+bool Mesh::is_hash_valid(const Tuple& tuple, const ConstAccessor<long>& hash_accessor) const
+{
+    const long cid = tuple.m_global_cid;
+    return tuple.m_hash == get_cell_hash(cid, hash_accessor);
+}
+
+bool Mesh::is_valid_slow(const Tuple& tuple) const
+{
+    ConstAccessor<long> hash_accessor = get_const_cell_hash_accessor();
+    return is_valid(tuple, hash_accessor);
 }
 
 bool Mesh::simplex_is_equal(const Simplex& s0, const Simplex& s1) const
@@ -149,10 +163,58 @@ Accessor<long> Mesh::get_cell_hash_accessor()
     return create_accessor(m_cell_hash_handle);
 }
 
+void Mesh::update_cell_hash(const Tuple& cell, Accessor<long>& hash_accessor)
+{
+    const long cid = cell.m_global_cid;
+    update_cell_hash(cid, hash_accessor);
+}
+void Mesh::update_cell_hash(const long cid, Accessor<long>& hash_accessor)
+{
+    ++hash_accessor.index_access().scalar_attribute(cid);
+}
+
+void Mesh::update_cell_hashes(const std::vector<Tuple>& cells, Accessor<long>& hash_accessor)
+{
+    for (const Tuple& t : cells) {
+        update_cell_hash(t, hash_accessor);
+    }
+}
+void Mesh::update_cell_hashes(const std::vector<long>& cells, Accessor<long>& hash_accessor)
+{
+    for (const long t : cells) {
+        update_cell_hash(t, hash_accessor);
+    }
+}
+
+void Mesh::update_cell_hashes_slow(const std::vector<Tuple>& cells)
+{
+    Accessor<long> hash_accessor = get_cell_hash_accessor();
+    update_cell_hashes(cells, hash_accessor);
+}
+
+
+Tuple Mesh::resurrect_tuple(const Tuple& tuple, const ConstAccessor<long>& hash_accessor) const
+{
+    Tuple t = tuple;
+    t.m_hash = get_cell_hash(tuple.m_global_cid, hash_accessor);
+    return t;
+}
+
+Tuple Mesh::resurrect_tuple_slow(const Tuple& tuple)
+{
+    Accessor<long> hash_accessor = get_cell_hash_accessor();
+    return resurrect_tuple(tuple, hash_accessor);
+}
+
+long Mesh::get_cell_hash(long cell_index, const ConstAccessor<long>& hash_accessor) const
+{
+    return hash_accessor.index_access().const_scalar_attribute(cell_index);
+}
+
 long Mesh::get_cell_hash_slow(long cell_index) const
 {
     ConstAccessor<long> hash_accessor = get_cell_hash_accessor();
-    return hash_accessor.scalar_attribute(cell_index);
+    return get_cell_hash(cell_index, hash_accessor);
 }
 
 void Mesh::set_capacities_from_flags()
@@ -185,7 +247,7 @@ std::vector<std::vector<long>> Mesh::simplices_to_gids(
     return gids;
 }
 
-AttributeScopeHandle Mesh::create_scope()
+attribute::AttributeScopeHandle Mesh::create_scope()
 {
     return m_attribute_manager.create_scope(*this);
 }

@@ -16,13 +16,14 @@ public:
     TriMesh& operator=(const TriMesh& o);
     TriMesh& operator=(TriMesh&& o);
 
+    PrimitiveType top_simplex_type() const override { return PrimitiveType::Face; }
     /**
      * @brief split edge t
      *
      * The returned tuple contains the new vertex. The face lies in the region where the input tuple
      * face was, and the edge is oriented in the same direction as in the input.
      */
-    Tuple split_edge(const Tuple& t) override;
+    Tuple split_edge(const Tuple& t, Accessor<long>& hash_accessor) override;
     /**
      * @brief collapse edge t
      *
@@ -31,7 +32,7 @@ public:
      * collapsed. The face is chosen such that the orientation of the tuple is the same as in the
      * input. If this is not possible due to a boundary, the opposite face is chosen.
      */
-    Tuple collapse_edge(const Tuple& t) override;
+    Tuple collapse_edge(const Tuple& t, Accessor<long>& hash_accessor) override;
 
     Tuple switch_tuple(const Tuple& tuple, PrimitiveType type) const override;
 
@@ -47,6 +48,7 @@ public:
     bool is_ccw(const Tuple& tuple) const override;
     bool is_boundary(const Tuple& tuple) const override;
     bool is_boundary_vertex(const Tuple& tuple) const override;
+    bool is_boundary_edge(const Tuple& tuple) const override;
 
     void initialize(
         Eigen::Ref<const RowVectors3l> FV,
@@ -62,9 +64,7 @@ public:
         return _debug_id(simplex.tuple(), simplex.primitive_type());
     }
 
-    bool is_valid(const Tuple& tuple) const override;
-
-    bool is_outdated(const Tuple& tuple) const override;
+    bool is_valid(const Tuple& tuple, ConstAccessor<long>& hash_accessor) const override;
 
     bool is_connectivity_valid() const override;
 
@@ -86,12 +86,12 @@ protected:
     Tuple tuple_from_id(const PrimitiveType type, const long gid) const override;
 
 protected:
-    MeshAttributeHandle<long> m_vf_handle;
-    MeshAttributeHandle<long> m_ef_handle;
+    attribute::MeshAttributeHandle<long> m_vf_handle;
+    attribute::MeshAttributeHandle<long> m_ef_handle;
 
-    MeshAttributeHandle<long> m_fv_handle;
-    MeshAttributeHandle<long> m_fe_handle;
-    MeshAttributeHandle<long> m_ff_handle;
+    attribute::MeshAttributeHandle<long> m_fv_handle;
+    attribute::MeshAttributeHandle<long> m_fe_handle;
+    attribute::MeshAttributeHandle<long> m_ff_handle;
 
     Tuple vertex_tuple_from_id(long id) const;
     Tuple edge_tuple_from_id(long id) const;

@@ -1,6 +1,5 @@
 
 set(SRC_FILES
-    Accessor.cpp
     Accessor.hpp
     Mesh.cpp
     Mesh.hpp
@@ -22,6 +21,8 @@ set(SRC_FILES
 	SimplicialComplex.cpp
     Scheduler.hpp
     Scheduler.cpp
+    MultiMeshManager.hpp
+    MultiMeshManager.cpp
 )
 target_sources(wildmeshing_toolkit PRIVATE ${SRC_FILES})
 
@@ -30,3 +31,6 @@ add_subdirectory(utils)
 add_subdirectory(attribute)
 add_subdirectory(operations)
 add_subdirectory(autogen)
+add_subdirectory(invariants)
+
+
