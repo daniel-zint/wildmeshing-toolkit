@@ -13,12 +13,18 @@ class IsosurfaceExtraction
     bool m_lock_boundary = true;
 
     MeshAttributeHandle<double> m_position_handle;
+    MeshAttributeHandle<int> m_tag_handle;
     Scheduler m_scheduler;
 
 public:
-    IsosurfaceExtraction(TriMesh& mesh, const double length, const bool lock_boundary);
+    IsosurfaceExtraction(
+        TriMesh& mesh,
+        Eigen::MatrixXd& V,
+        Eigen::MatrixXi& F,
+        const double length,
+        const bool lock_boundary);
 
-    void remeshing(const long iterations);
+    void process(const long iterations);
 };
 
 } // namespace wmtk::components::internal
