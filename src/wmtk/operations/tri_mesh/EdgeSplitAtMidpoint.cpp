@@ -28,10 +28,16 @@ EdgeSplitAtMidpoint::EdgeSplitAtMidpoint(
     : TriMeshOperation(m)
     , TupleOperation(settings.split_settings.invariants, t)
     , m_pos_accessor{m.create_accessor(settings.position)}
+    , m_tag_accessor{m.create_accessor(settings.tag)}
     , m_settings{settings}
 {
     p0 = m_pos_accessor.vector_attribute(input_tuple());
     p1 = m_pos_accessor.vector_attribute(mesh().switch_vertex(input_tuple()));
+    t0 = t1 = 0;
+    if (settings.for_extraction) {
+        // t0 = (m_tag_accessor.vector_attribute(input_tuple()))(0);
+        // t1 = (m_tag_accessor.vector_attribute(mesh().switch_vertex(input_tuple())))(0);
+    }
 }
 std::string EdgeSplitAtMidpoint::name() const
 {
@@ -43,7 +49,11 @@ Tuple EdgeSplitAtMidpoint::return_tuple() const
 }
 bool EdgeSplitAtMidpoint::before() const
 {
-    return TupleOperation::before();
+    if (m_settings.for_extraction)
+        return TupleOperation::before() &&
+               (t0 != Iso_Vertex_Type::INPUT || t1 != Iso_Vertex_Type::INPUT);
+    else
+        return TupleOperation::before();
 }
 bool EdgeSplitAtMidpoint::execute()
 {
@@ -56,6 +66,12 @@ bool EdgeSplitAtMidpoint::execute()
     }
 
     m_pos_accessor.vector_attribute(m_output_tuple) = 0.5 * (p0 + p1);
+    if (m_settings.for_extraction) {
+        // if (t0 == Iso_Vertex_Type::OFFSET && t1 == Iso_Vertex_Type::OFFSET)
+        //     (m_tag_accessor.vector_attribute(m_output_tuple))(0) = Iso_Vertex_Type::OFFSET;
+        // else
+        //     (m_tag_accessor.vector_attribute(m_output_tuple))(0) = Iso_Vertex_Type::SCALFFOLD;
+    }
 
     return true;
 }

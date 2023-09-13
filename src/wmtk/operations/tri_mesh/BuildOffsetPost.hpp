@@ -17,7 +17,7 @@ struct OperationSettings<tri_mesh::BuildOffsetPost>
     // handle to vertex position
     MeshAttributeHandle<double> position;
     // handle to vertex tag
-    MeshAttributeHandle<int> tag;
+    MeshAttributeHandle<long> tag;
     // debug functionality to make sure operations are constructed properly
     // bool are_invariants_initialized() const;
 };
@@ -41,16 +41,16 @@ protected:
 private:
     Tuple m_output_tuple;
     Accessor<double> m_pos_accessor;
-    Accessor<int> m_tag_accessor; // 0-scalffold 1-input 2-offset
+    Accessor<long> m_tag_accessor; // 0-scalffold 1-input 2-offset
 
     const OperationSettings<BuildOffsetPost>& m_settings;
 
     Eigen::Vector3d p0;
     Eigen::Vector3d p1;
     Eigen::Vector3d p2;
-    int t0;
-    int t1;
-    int t2;
+    long t0;
+    long t1;
+    long t2;
 };
 
 } // namespace tri_mesh

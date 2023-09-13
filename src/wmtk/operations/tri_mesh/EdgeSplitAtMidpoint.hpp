@@ -21,6 +21,9 @@ struct OperationSettings<tri_mesh::EdgeSplitAtMidpoint>
 
     // debug functionality to make sure operations are constructed properly
     bool are_invariants_initialized() const;
+
+    bool for_extraction = false;
+    MeshAttributeHandle<long> tag = MeshAttributeHandle<long>();
 };
 
 namespace tri_mesh {
@@ -45,11 +48,14 @@ protected:
 private:
     Tuple m_output_tuple;
     Accessor<double> m_pos_accessor;
+    Accessor<long> m_tag_accessor;
 
     const OperationSettings<EdgeSplitAtMidpoint>& m_settings;
 
     Eigen::Vector3d p0;
     Eigen::Vector3d p1;
+    long t0;
+    long t1;
 };
 
 } // namespace tri_mesh
