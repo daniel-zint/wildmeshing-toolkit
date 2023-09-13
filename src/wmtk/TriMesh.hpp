@@ -7,6 +7,8 @@
 
 namespace wmtk {
 
+enum Iso_Vertex_Type { SCALFFOLD, INPUT, OFFSET };
+
 class TriMesh : public Mesh
 {
 public:

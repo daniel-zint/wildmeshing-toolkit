@@ -17,5 +17,7 @@ set(SRC_FILES
     VertexTangentialSmooth.cpp
     BuildOffset.hpp
     BuildOffset.cpp
+    BuildOffsetPost.hpp
+    BuildOffsetPost.cpp
 )
 target_sources(wildmeshing_toolkit PRIVATE ${SRC_FILES})
