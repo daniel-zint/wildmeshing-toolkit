@@ -14,6 +14,7 @@ template <>
 struct OperationSettings<tri_mesh::EdgeSwap>
 {
     bool must_improve_valence = false;
+    bool must_dampen_energy = false;
     InvariantCollection invariants;
 };
 

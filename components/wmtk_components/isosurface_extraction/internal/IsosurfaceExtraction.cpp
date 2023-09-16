@@ -4,7 +4,7 @@
 #include <wmtk/SimplicialComplex.hpp>
 #include <wmtk/operations/tri_mesh/BuildOffset.hpp>
 #include <wmtk/operations/tri_mesh/BuildOffsetPost.hpp>
-#include <wmtk/operations/tri_mesh/EdgeCollapseToMidpoint.hpp>
+#include <wmtk/operations/tri_mesh/EdgeCollapseToOptimal.hpp>
 #include <wmtk/operations/tri_mesh/EdgeSplitAtMidpoint.hpp>
 #include <wmtk/operations/tri_mesh/EdgeSwap.hpp>
 #include <wmtk/operations/tri_mesh/VertexTangentialSmooth.hpp>
@@ -30,7 +30,7 @@ IsosurfaceExtraction::IsosurfaceExtraction(
     // more things todo...
 
     m_position_handle = m_mesh.get_attribute_handle<double>("position", PrimitiveType::Vertex);
-    m_tag_handle = m_mesh.get_attribute_handle<int>("tag", PrimitiveType::Vertex);
+    m_tag_handle = m_mesh.get_attribute_handle<long>("tag", PrimitiveType::Vertex);
     // offset computation
     {
         // BuildOffset Operation, has two passes
@@ -65,7 +65,44 @@ IsosurfaceExtraction::IsosurfaceExtraction(
     }
 
     // remeshing and optimization
-    {}
+    {
+        // split
+        // only for edges end without input vertices
+        OperationSettings<tri_mesh::EdgeSplitAtMidpoint> split_settings;
+        split_settings.position = m_position_handle;
+        split_settings.min_squared_length = m_length_max * m_length_max;
+        split_settings.split_settings.split_boundary_edges = !m_lock_boundary;
+        split_settings.initialize_invariants(m_mesh);
+        split_settings.for_extraction = true;
+        m_scheduler.add_operation_type<tri_mesh::EdgeSplitAtMidpoint>("split", split_settings);
+
+        // collapse
+        // only for exterior edges, edge should be collapse to offset
+        // OperationSettings<tri_mesh::EdgeCollapseToMidpoint>;
+        OperationSettings<tri_mesh::EdgeCollapseToOptimal> collapse_settings;
+        collapse_settings.position = m_position_handle;
+        collapse_settings.tag = m_tag_handle;
+        collapse_settings.max_squared_length = m_length_min * m_length_min;
+        collapse_settings.collapse_settings.collapse_boundary_edges = !m_lock_boundary;
+        collapse_settings.collapse_towards_boundary = true;
+        collapse_settings.initialize_invariants(m_mesh);
+        m_scheduler.add_operation_type<tri_mesh::EdgeCollapseToOptimal>(
+            "collapse",
+            collapse_settings);
+
+        // swap
+        // for exterior edges, it would be normal
+        // for interior edges, offset vertices should never be swapped
+        // and interior offset should be offset if its edge's length could be smaller
+        OperationSettings<tri_mesh::EdgeSwap> op_settings;
+        op_settings.must_improve_valence = true;
+
+        m_scheduler.add_operation_type<tri_mesh::EdgeSwap>("swap", op_settings);
+
+        // relocate
+        // exterior vertices just do averaging
+        // offset average neighbours' position and push back to offset vertices
+    }
 }
 
 void IsosurfaceExtraction::process(const long iterations)
