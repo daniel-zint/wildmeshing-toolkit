@@ -24,7 +24,7 @@ public:
         const double length,
         const bool lock_boundary);
 
-    void process(const long iterations);
+    void process(const long iteration_times);
 };
 
 } // namespace wmtk::components::internal

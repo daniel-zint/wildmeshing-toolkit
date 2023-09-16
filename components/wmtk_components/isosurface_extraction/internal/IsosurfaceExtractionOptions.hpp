@@ -15,7 +15,7 @@ struct IsosurfaceExtractionOptions
     double inflate_abs = -1;
     double inflate_rel = -1;
     double resolution_rate = -1;
-    long iterations = -1;
+    long iteration_times = -1;
     bool lock_boundary = true;
 };
 
@@ -27,7 +27,7 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
     inflate_abs,
     inflate_rel,
     resolution_rate,
-    iterations,
+    iteration_times,
     lock_boundary);
 
 } // namespace internal

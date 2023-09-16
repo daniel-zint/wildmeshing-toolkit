@@ -52,7 +52,7 @@ void isosurface_extraction(
     }
 
     IsosurfaceExtraction iso_ex(mesh, V, F, options.inflate_abs, options.lock_boundary);
-    iso_ex.process(options.iterations);
+    iso_ex.process(options.iteration_times);
 
     // output
     {

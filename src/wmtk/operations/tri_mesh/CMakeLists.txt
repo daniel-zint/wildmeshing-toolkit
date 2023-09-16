@@ -21,5 +21,7 @@ set(SRC_FILES
     BuildOffsetPost.cpp
     EdgeCollapseToOptimal.hpp
     EdgeCollapseToOptimal.cpp
+    PushOffset.hpp
+    PushOffset.cpp
 )
 target_sources(wildmeshing_toolkit PRIVATE ${SRC_FILES})

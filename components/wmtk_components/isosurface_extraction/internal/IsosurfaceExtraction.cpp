@@ -7,6 +7,7 @@
 #include <wmtk/operations/tri_mesh/EdgeCollapseToOptimal.hpp>
 #include <wmtk/operations/tri_mesh/EdgeSplitAtMidpoint.hpp>
 #include <wmtk/operations/tri_mesh/EdgeSwap.hpp>
+#include <wmtk/operations/tri_mesh/PushOffset.hpp>
 #include <wmtk/operations/tri_mesh/VertexTangentialSmooth.hpp>
 
 namespace wmtk::components::internal {
@@ -94,29 +95,42 @@ IsosurfaceExtraction::IsosurfaceExtraction(
         // for exterior edges, it would be normal
         // for interior edges, offset vertices should never be swapped
         // and interior offset should be offset if its edge's length could be smaller
-        OperationSettings<tri_mesh::EdgeSwap> op_settings;
-        op_settings.must_improve_valence = true;
-
-        m_scheduler.add_operation_type<tri_mesh::EdgeSwap>("swap", op_settings);
+        OperationSettings<tri_mesh::EdgeSwap> swap_settings;
+        swap_settings.must_improve_valence = true;
+        m_scheduler.add_operation_type<tri_mesh::EdgeSwap>("swap", swap_settings);
 
         // relocate
         // exterior vertices just do averaging
         // offset average neighbours' position and push back to offset vertices
+        OperationSettings<tri_mesh::VertexSmooth> relocate_pass1;
+        relocate_pass1.for_extraction = true;
+        relocate_pass1.position = m_position_handle;
+        relocate_pass1.tag = m_tag_handle;
+        relocate_pass1.smooth_boundary = !m_lock_boundary;
+        m_scheduler.add_operation_type<tri_mesh::VertexSmooth>("relocate_pass1", relocate_pass1);
+
+        OperationSettings<tri_mesh::PushOffset> relocate_pass2;
+        relocate_pass2.distance = length;
+        relocate_pass2.position = m_position_handle;
+        relocate_pass2.tag = m_tag_handle;
+        relocate_pass2.smooth_boundary = !m_lock_boundary;
+        m_scheduler.add_operation_type<tri_mesh::PushOffset>("relocate_pass2", relocate_pass2);
     }
 }
 
-void IsosurfaceExtraction::process(const long iterations)
+void IsosurfaceExtraction::process(const long iteration_times)
 {
     // build offset
     m_scheduler.run_operation_on_all(PrimitiveType::Edge, "buildoffset_pass1");
     m_scheduler.run_operation_on_all(PrimitiveType::Edge, "buildoffset_pass2");
     m_scheduler.run_operation_on_all(PrimitiveType::Edge, "buildoffset_pass3");
-    // for (long i = 0; i < iterations; ++i) {
-    //     m_scheduler.run_operation_on_all(PrimitiveType::Edge, "split");
-    //     m_scheduler.run_operation_on_all(PrimitiveType::Edge, "collapse");
-    //     m_scheduler.run_operation_on_all(PrimitiveType::Edge, "swap");
-    //     m_scheduler.run_operation_on_all(PrimitiveType::Vertex, "smooth");
-    // }
+    for (long i = 0; i < iteration_times; ++i) {
+        m_scheduler.run_operation_on_all(PrimitiveType::Edge, "split");
+        m_scheduler.run_operation_on_all(PrimitiveType::Edge, "collapse");
+        m_scheduler.run_operation_on_all(PrimitiveType::Edge, "swap");
+        m_scheduler.run_operation_on_all(PrimitiveType::Edge, "relocate_pass1");
+        m_scheduler.run_operation_on_all(PrimitiveType::Edge, "relocate_pass2");
+    }
 }
 
 } // namespace wmtk::components::internal
