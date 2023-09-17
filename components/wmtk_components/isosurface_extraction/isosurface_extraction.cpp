@@ -41,7 +41,7 @@ void isosurface_extraction(
     Eigen::MatrixXi F;
     {
         const std::filesystem::path& file = files[options.input];
-        igl::read_triangle_mesh(file, V, F);
+        igl::read_triangle_mesh(file.string(), V, F);
     }
 
     if (options.inflate_abs < 0) {

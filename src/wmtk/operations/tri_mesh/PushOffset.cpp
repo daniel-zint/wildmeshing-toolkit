@@ -74,7 +74,7 @@ Eigen::Vector3d PushOffset::computeOriginOnInput(
 {
     Eigen::Vector3d tP = m_pos_accessor.vector_attribute(t);
     Eigen::Vector3d ret;
-    double min_distance = __DBL_MAX__;
+    double min_distance = std::numeric_limits<double>::max();
     for (auto& neighbour : neighbours) {
         const std::vector<Simplex> one_ring = SimplicialComplex::vertex_one_ring(mesh(), neighbour);
         for (const Simplex& s : one_ring) {
