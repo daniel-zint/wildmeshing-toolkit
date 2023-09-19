@@ -23,5 +23,7 @@ set(SRC_FILES
     EdgeCollapseToOptimal.cpp
     PushOffset.hpp
     PushOffset.cpp
+    VertexSmoothTagged.hpp
+    VertexSmoothTagged.cpp
 )
 target_sources(wildmeshing_toolkit PRIVATE ${SRC_FILES})

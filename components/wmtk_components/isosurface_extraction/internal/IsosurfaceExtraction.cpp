@@ -16,6 +16,7 @@ IsosurfaceExtraction::IsosurfaceExtraction(
     TriMesh& mesh,
     Eigen::MatrixXd& V,
     Eigen::MatrixXi& F,
+    std::vector<bool>& Vtags,
     const double length,
     const bool lock_boundary)
     : m_mesh{mesh}
@@ -25,13 +26,20 @@ IsosurfaceExtraction::IsosurfaceExtraction(
     , m_scheduler(m_mesh)
 {
     using namespace operations;
-    // triangulate
-    Eigen::MatrixXi E;
-    igl::edges(F, E);
-    // more things todo...
-
+    // register the attributes
     m_position_handle = m_mesh.get_attribute_handle<double>("position", PrimitiveType::Vertex);
     m_tag_handle = m_mesh.get_attribute_handle<long>("tag", PrimitiveType::Vertex);
+
+    auto tag = m_mesh.create_accessor(m_tag_handle);
+    // set the tags
+    size_t iter = 0;
+    for (const Tuple& v : mesh.get_all(PrimitiveType::Vertex)) {
+        if (Vtags[iter++])
+            (tag.vector_attribute(v))(0) = INPUT;
+        else
+            (tag.vector_attribute(v))(0) = SCALFFOLD;
+    }
+
     // offset computation
     {
         // BuildOffset Operation, has two passes
@@ -69,13 +77,13 @@ IsosurfaceExtraction::IsosurfaceExtraction(
     {
         // split
         // only for edges end without input vertices
-        OperationSettings<tri_mesh::EdgeSplitAtMidpoint> split_settings;
-        split_settings.position = m_position_handle;
-        split_settings.min_squared_length = m_length_max * m_length_max;
-        split_settings.split_settings.split_boundary_edges = !m_lock_boundary;
-        split_settings.initialize_invariants(m_mesh);
-        split_settings.for_extraction = true;
-        m_scheduler.add_operation_type<tri_mesh::EdgeSplitAtMidpoint>("split", split_settings);
+        // OperationSettings<tri_mesh::EdgeSplitAtMidpoint> split_settings;
+        // split_settings.position = m_position_handle;
+        // split_settings.min_squared_length = m_length_max * m_length_max;
+        // split_settings.split_settings.split_boundary_edges = !m_lock_boundary;
+        // split_settings.initialize_invariants(m_mesh);
+        // split_settings.for_extraction = true;
+        // m_scheduler.add_operation_type<tri_mesh::EdgeSplitAtMidpoint>("split", split_settings);
 
         // collapse
         // only for exterior edges, edge should be collapse to offset
@@ -102,12 +110,12 @@ IsosurfaceExtraction::IsosurfaceExtraction(
         // relocate
         // exterior vertices just do averaging
         // offset average neighbours' position and push back to offset vertices
-        OperationSettings<tri_mesh::VertexSmooth> relocate_pass1;
-        relocate_pass1.for_extraction = true;
-        relocate_pass1.position = m_position_handle;
-        relocate_pass1.tag = m_tag_handle;
-        relocate_pass1.smooth_boundary = !m_lock_boundary;
-        m_scheduler.add_operation_type<tri_mesh::VertexSmooth>("relocate_pass1", relocate_pass1);
+        // OperationSettings<tri_mesh::VertexSmooth> relocate_pass1;
+        // relocate_pass1.for_extraction = true;
+        // relocate_pass1.position = m_position_handle;
+        // relocate_pass1.tag = m_tag_handle;
+        // relocate_pass1.smooth_boundary = !m_lock_boundary;
+        // m_scheduler.add_operation_type<tri_mesh::VertexSmooth>("relocate_pass1", relocate_pass1);
 
         OperationSettings<tri_mesh::PushOffset> relocate_pass2;
         relocate_pass2.distance = length;

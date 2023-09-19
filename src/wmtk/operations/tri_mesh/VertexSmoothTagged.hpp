@@ -3,41 +3,40 @@
 #include <wmtk/invariants/InvariantCollection.hpp>
 #include <wmtk/operations/TupleOperation.hpp>
 #include "TriMeshOperation.hpp"
+#include "VertexSmooth.hpp"
 
 namespace wmtk::operations {
 namespace tri_mesh {
-class VertexSmooth;
+class VertexSmoothTagged;
 }
 
 template <>
-struct OperationSettings<tri_mesh::VertexSmooth>
+struct OperationSettings<tri_mesh::VertexSmoothTagged>
 {
-    MeshAttributeHandle<double> position;
-    MeshAttributeHandle<long> tag;
-    bool smooth_boundary = false;
-    InvariantCollection invariants;
+    OperationSettings<tri_mesh::VertexSmooth> smooth_settings;
 };
 
 namespace tri_mesh {
-class VertexSmooth : public TriMeshOperation, private TupleOperation
+class VertexSmoothTagged : public TriMeshOperation, private TupleOperation
 {
 public:
-    VertexSmooth(Mesh& m, const Tuple& t, const OperationSettings<VertexSmooth>& settings);
+    VertexSmoothTagged(
+        Mesh& m,
+        const Tuple& t,
+        const OperationSettings<VertexSmoothTagged>& settings);
 
     std::string name() const override;
 
     static PrimitiveType primitive_type() { return PrimitiveType::Vertex; }
-
-    const Tuple& return_tuple() const;
 
 protected:
     bool before() const override;
     bool execute() override;
 
 private:
-    Tuple m_output_tuple;
     Accessor<double> m_pos_accessor;
-    const OperationSettings<VertexSmooth>& m_settings;
+    Accessor<long> m_tag_accessor;
+    const OperationSettings<VertexSmoothTagged>& m_settings;
 };
 
 } // namespace tri_mesh

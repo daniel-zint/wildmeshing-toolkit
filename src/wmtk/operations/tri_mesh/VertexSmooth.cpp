@@ -8,7 +8,6 @@ VertexSmooth::VertexSmooth(Mesh& m, const Tuple& t, const OperationSettings<Vert
     : TriMeshOperation(m)
     , TupleOperation(settings.invariants, t)
     , m_pos_accessor(m.create_accessor<double>(settings.position))
-    , m_tag_accessor(m.create_accessor<long>(settings.tag))
     , m_settings{settings}
 {}
 
@@ -28,11 +27,6 @@ bool VertexSmooth::before() const
         return false;
     }
     if (!m_settings.smooth_boundary && mesh().is_boundary_vertex(input_tuple())) {
-        return false;
-    }
-    if (m_settings.for_extraction &&
-        ((m_tag_accessor.vector_attribute(input_tuple()))(0) == INPUT ||
-         (m_tag_accessor.vector_attribute(input_tuple()))(0) == OFFSET)) {
         return false;
     }
     return true;

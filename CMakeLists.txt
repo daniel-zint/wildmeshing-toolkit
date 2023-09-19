@@ -100,7 +100,7 @@ target_compile_definitions(wildmeshing_toolkit PUBLIC NOMINMAX)
 target_compile_features(wildmeshing_toolkit PUBLIC cxx_std_17)
 
 #target_compile_options(wildmeshing_toolkit PUBLIC  -fconcepts)
-
+    
 
 target_link_libraries(wildmeshing_toolkit PRIVATE wmtk::warnings)
 wmtk_target_link_system_libraries(wildmeshing_toolkit PUBLIC

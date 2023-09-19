@@ -21,6 +21,7 @@ public:
         TriMesh& mesh,
         Eigen::MatrixXd& V,
         Eigen::MatrixXi& F,
+        std::vector<bool>& Vtags,
         const double length,
         const bool lock_boundary);
 
